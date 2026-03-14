@@ -7,7 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Migrate(ctx context.Context, pool *pgxpool.Pool, migrationsFS embed.FS) error {
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
+
+func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	files, err := migrationsFS.ReadDir("migrations")
 	if err != nil {
 		return err

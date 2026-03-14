@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"errors"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -17,6 +19,8 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+	loadEnvFile(".env")
+
 	databaseURL := getEnvOr("DATABASE_URL", "")
 	if databaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required")
@@ -40,6 +44,32 @@ func Load() (*Config, error) {
 		OpenAIAPIKey:      openAIAPIKey,
 		ServerPort:        getEnvOr("SERVER_PORT", "8080"),
 	}, nil
+}
+
+// loadEnvFile reads a .env file and sets environment variables.
+func loadEnvFile(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if os.Getenv(key) == "" {
+			os.Setenv(key, value)
+		}
+	}
 }
 
 func getEnvOr(key, defaultValue string) string {
