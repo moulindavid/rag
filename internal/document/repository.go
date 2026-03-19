@@ -70,7 +70,7 @@ func (r *Repository) SearchSimilar(ctx context.Context, embedding pgvector.Vecto
 	var chunks []Chunk
 	for rows.Next() {
 		var c Chunk
-		if err := rows.Scan(&c.ID, &c.DocumentID, &c.Content); err != nil {
+		if err := rows.Scan(&c.ID, &c.DocumentID, &c.Content, &c.Score); err != nil {
 			return nil, fmt.Errorf("scan chunk: %w", err)
 		}
 		chunks = append(chunks, c)

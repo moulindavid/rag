@@ -15,10 +15,6 @@ func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	}
 
 	config.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
-		_, err := conn.Exec(ctx, "CREATE EXTENSION IF NOT EXISTS vector")
-		if err != nil {
-			return err
-		}
 		return pgvector.RegisterTypes(ctx, conn)
 	}
 
