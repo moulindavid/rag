@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/moulindavid/rag/internal/config"
 	"github.com/moulindavid/rag/internal/database"
+	"github.com/moulindavid/rag/internal/document"
 	"github.com/moulindavid/rag/internal/embedding"
 )
 
@@ -48,16 +51,17 @@ func main() {
 	embedder := embedding.NewOllamaEmbedder(cfg.OllamaURL, cfg.OllamaEmbedModel)
 	slog.Info("embedder created", "model", cfg.OllamaEmbedModel, "dimension", embedder.Dimension())
 
-	vectors, err := embedder.Embed(ctx, []string{"Bip bop bip", "Ghosty ty ghost"})
-	if err != nil {
-		slog.Error("failed to embed texts", "error", err)
+	repo := document.NewRepository(pool)
+	service := document.NewService(repo, embedder)
+	handler := document.NewHandler(service)
+
+	r := chi.NewRouter()
+	r.Post("/documents", handler.Upload)
+
+	addr := fmt.Sprintf(":%s", cfg.ServerPort)
+	slog.Info("server starting", "addr", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
+		slog.Error("server error", "error", err)
 		os.Exit(1)
 	}
-	slog.Info("embedding test passed",
-		"num_vectors", len(vectors),
-		"dim_vector_0", len(vectors[0]),
-		"first_3_values", fmt.Sprintf("%.4f, %.4f, %.4f", vectors[0][0], vectors[0][1], vectors[0][2]),
-	)
-
-	slog.Info("Bip bop no errorino")
 }

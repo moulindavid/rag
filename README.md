@@ -6,4 +6,4 @@ ollama pull nomic-embed-text
 ollama pull llama3
 
 
-go run compile
+go build ./...
