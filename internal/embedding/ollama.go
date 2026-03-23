@@ -28,7 +28,28 @@ func NewOllamaEmbedder(url, model string) *OllamaEmbedder {
 	}
 }
 
+const batchSize = 10
+
 func (o *OllamaEmbedder) Embed(ctx context.Context, texts []string) ([][]float32, error) {
+	var all [][]float32
+
+	for i := 0; i < len(texts); i += batchSize {
+		end := i + batchSize
+		if end > len(texts) {
+			end = len(texts)
+		}
+
+		embeddings, err := o.embedBatch(ctx, texts[i:end])
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, embeddings...)
+	}
+
+	return all, nil
+}
+
+func (o *OllamaEmbedder) embedBatch(ctx context.Context, texts []string) ([][]float32, error) {
 	reqBody, err := json.Marshal(embedRequest{Model: o.model, Input: texts})
 	if err != nil {
 		return nil, fmt.Errorf("marshaling request: %w", err)
@@ -53,8 +74,7 @@ func (o *OllamaEmbedder) Embed(ctx context.Context, texts []string) ([][]float32
 	var result struct {
 		Embeddings [][]float32 `json:"embeddings"`
 	}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("decoding response: %w", err)
 	}
 	return result.Embeddings, nil

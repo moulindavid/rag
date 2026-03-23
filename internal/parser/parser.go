@@ -18,7 +18,7 @@ func Parse(filename string, reader io.Reader) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return strings.TrimSpace(string(file)), nil
+		return normalizeLineEndings(strings.TrimSpace(string(file))), nil
 
 	case ".pdf":
 		data, err := io.ReadAll(reader)
@@ -40,9 +40,13 @@ func Parse(filename string, reader io.Reader) (string, error) {
 			}
 			sb.WriteString(text)
 		}
-		return strings.TrimSpace(sb.String()), nil
+		return normalizeLineEndings(strings.TrimSpace(sb.String())), nil
 
 	default:
 		return "", fmt.Errorf("unsupported file extension: %s", extension)
 	}
+}
+
+func normalizeLineEndings(s string) string {
+	return strings.ReplaceAll(s, "\r\n", "\n")
 }
