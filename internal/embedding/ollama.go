@@ -34,10 +34,7 @@ func (o *OllamaEmbedder) Embed(ctx context.Context, texts []string) ([][]float32
 	var all [][]float32
 
 	for i := 0; i < len(texts); i += batchSize {
-		end := i + batchSize
-		if end > len(texts) {
-			end = len(texts)
-		}
+		end := min(i+batchSize, len(texts))
 
 		embeddings, err := o.embedBatch(ctx, texts[i:end])
 		if err != nil {
