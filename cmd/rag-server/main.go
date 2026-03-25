@@ -13,6 +13,8 @@ import (
 	"github.com/moulindavid/rag/internal/database"
 	"github.com/moulindavid/rag/internal/document"
 	"github.com/moulindavid/rag/internal/embedding"
+	"github.com/moulindavid/rag/internal/llm"
+	"github.com/moulindavid/rag/internal/query"
 )
 
 func main() {
@@ -51,12 +53,20 @@ func main() {
 	embedder := embedding.NewOllamaEmbedder(cfg.OllamaURL, cfg.OllamaEmbedModel)
 	slog.Info("embedder created", "model", cfg.OllamaEmbedModel, "dimension", embedder.Dimension())
 
+	llmClient := llm.NewOllamaClient(cfg.OllamaURL, cfg.OllamaLLMModel)
+	slog.Info("llm client created", "model", cfg.OllamaLLMModel)
+
 	repo := document.NewRepository(pool)
-	service := document.NewService(repo, embedder)
-	handler := document.NewHandler(service)
+
+	docService := document.NewService(repo, embedder)
+	docHandler := document.NewHandler(docService)
+
+	queryService := query.NewService(repo, embedder, llmClient)
+	queryHandler := query.NewHandler(queryService)
 
 	r := chi.NewRouter()
-	r.Post("/documents", handler.Upload)
+	r.Post("/documents", docHandler.Upload)
+	r.Post("/query", queryHandler.Query)
 
 	addr := fmt.Sprintf(":%s", cfg.ServerPort)
 	slog.Info("server starting", "addr", addr)
