@@ -27,7 +27,11 @@ func Chunk(text string) []string {
 			result = append(result, buffer)
 			overlap := buffer
 			if len(buffer) > overlapSize {
-				overlap = buffer[len(buffer)-overlapSize:]
+				start := len(buffer) - overlapSize
+				for start > 0 && buffer[start-1] != ' ' {
+					start--
+				}
+				overlap = buffer[start:]
 			}
 			buffer = overlap + "\n\n" + p
 		}
