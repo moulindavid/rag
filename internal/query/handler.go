@@ -1,13 +1,18 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 )
 
+type queryService interface {
+	Query(ctx context.Context, req *Request) (*Response, error)
+}
+
 type Handler struct {
-	service *Service
+	service queryService
 }
 
 func NewHandler(service *Service) *Handler {

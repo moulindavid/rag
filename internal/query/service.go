@@ -11,13 +11,17 @@ import (
 	"github.com/pgvector/pgvector-go"
 )
 
+type chunkSearcher interface {
+	SearchSimilar(ctx context.Context, embedding pgvector.Vector, limit int) ([]document.Chunk, error)
+}
+
 type Service struct {
-	repo     *document.Repository
+	repo     chunkSearcher
 	embedder embedding.Embedder
 	llm      llm.Client
 }
 
-func NewService(repo *document.Repository, embedder embedding.Embedder, llmClient llm.Client) *Service {
+func NewService(repo chunkSearcher, embedder embedding.Embedder, llmClient llm.Client) *Service {
 	return &Service{repo: repo, embedder: embedder, llm: llmClient}
 }
 

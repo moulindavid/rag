@@ -1,14 +1,20 @@
 package document
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"strings"
 )
 
+type ingester interface {
+	Ingest(ctx context.Context, filename string, content io.Reader) (*Document, error)
+}
+
 type Handler struct {
-	service *Service
+	service ingester
 }
 
 func NewHandler(service *Service) *Handler {
